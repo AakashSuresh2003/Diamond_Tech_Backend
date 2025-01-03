@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const ConnectDB = require('./src/utils/database');
 const categoryRoutes = require('./src/routes/productsRoute');
-
+const inquiryRoutes = require('./src/routes/inQueryFormRoute');
 
 app.use(express.json());
 
@@ -20,6 +20,7 @@ app.use(cors());
 ConnectDB();
 
 app.use("/api/v1/", categoryRoutes);
+app.use("/api/v1/", inquiryRoutes); 
 
 app.get("/", (req, res) => {
   res.status(200).json("Welcome to Diamond Technologies");
