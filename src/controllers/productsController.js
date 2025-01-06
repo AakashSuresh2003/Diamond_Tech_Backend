@@ -1,13 +1,27 @@
-// controllers/categoryController.js
-
 const Category = require('../models/productModel');
+const upload = require('../utils/multer');
 
-// Create a new category
 exports.createCategory = async (req, res) => {
   try {
-    const categoryData = req.body;
+    if (!req.file) {
+      return res.status(400).json({ message: 'Category image is required' });
+    }
+
+    const { categoryName } = req.body;
+    const categoryImage = `/uploads/${req.file.filename}`;
+
+    if (!categoryName) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+
+    const categoryData = {
+      categoryName,
+      categoryImage,
+    };
+
     const category = new Category(categoryData);
     await category.save();
+
     res.status(201).json({ message: 'Category created successfully', category });
   } catch (err) {
     console.error(err);
@@ -15,7 +29,6 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-// Get all categories
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
@@ -25,7 +38,6 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
-// Get a specific category by ID
 exports.getCategoryById = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -39,11 +51,27 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
-// Add a subcategory to a category
 exports.addSubCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const subCategoryData = req.body;
+    const { subCategoryName, subCategoriesYoutubeLink } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Subcategory image is required' });
+    }
+
+    if (!subCategoryName) {
+      return res.status(400).json({ message: 'Subcategory name is required' });
+    }
+
+    const subCategoryImage = `/uploads/${req.file.filename}`;
+
+    const subCategoryData = {
+      subCategoryName,
+      subCategoryImage,
+      subCategoriesYoutubeLink: subCategoriesYoutubeLink || "",
+      category: categoryId
+    };
 
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -55,15 +83,34 @@ exports.addSubCategory = async (req, res) => {
 
     res.status(201).json({ message: 'Subcategory added successfully', category });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: 'Error adding subcategory', error: err.message });
   }
 };
 
-// Add a product to a subcategory
 exports.addProductToSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
-    const productData = req.body;
+    const { productName, details, productsYoutubeLink } = req.body;
+
+    const specifications = [];
+    for (let i = 0; ; i++) {
+      const key = req.body[`specifications[${i}].key`];
+      const value = req.body[`specifications[${i}].value`];
+      const unit = req.body[`specifications[${i}].unit`];
+
+      if (!key || !value) break;
+
+      specifications.push({ key, value, unit: unit || "-" });
+    }
+
+    const productData = { productName, details, productsYoutubeLink, specifications };
+
+    if (req.file) {
+      productData.productImage = `/uploads/${req.file.filename}`;
+    }
+
+    console.log('Product Data:', productData);
 
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -80,11 +127,11 @@ exports.addProductToSubCategory = async (req, res) => {
 
     res.status(201).json({ message: 'Product added successfully', category });
   } catch (err) {
+    console.error('Error adding product:', err);
     res.status(400).json({ message: 'Error adding product', error: err.message });
   }
 };
 
-// Get all products in a subcategory
 exports.getProductsInSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
@@ -105,7 +152,21 @@ exports.getProductsInSubCategory = async (req, res) => {
   }
 };
 
-// Get a specific product by ID
+exports.getSubCategoriesInCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    res.status(200).json(category.subCategories);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching subcategories', error: err.message });
+  }
+};
+
 exports.getProductById = async (req, res) => {
   try {
     const { categoryId, subCategoryId, productId } = req.params;
@@ -131,11 +192,44 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// Update a specific product
 exports.updateProduct = async (req, res) => {
   try {
     const { categoryId, subCategoryId, productId } = req.params;
-    const productData = req.body;
+    let { productName, details, specifications, productsYoutubeLink } = req.body;
+
+    const productData = {};
+
+    if (req.file) {
+      productData.productImage = `/uploads/${req.file.filename}`;
+    }
+
+    if (productName) productData.productName = productName;
+    if (details) productData.details = details;
+    if (productsYoutubeLink) productData.productsYoutubeLink = productsYoutubeLink;
+
+    if (specifications) {
+      let parsedSpecifications = [];
+
+      for (let key in req.body) {
+        if (key.includes('specifications[')) {
+          const match = key.match(/specifications\[(\d+)\]\.(key|value|unit)/);
+          if (match) {
+            const index = match[1];
+            const field = match[2];
+
+            if (!parsedSpecifications[index]) {
+              parsedSpecifications[index] = {};
+            }
+
+            parsedSpecifications[index][field] = req.body[key];
+          }
+        }
+      }
+
+      if (parsedSpecifications.length > 0) {
+        productData.specifications = parsedSpecifications;
+      }
+    }
 
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -157,11 +251,11 @@ exports.updateProduct = async (req, res) => {
 
     res.status(200).json({ message: 'Product updated successfully', product });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: 'Error updating product', error: err.message });
   }
 };
 
-// Delete a specific product
 exports.deleteProduct = async (req, res) => {
   try {
     const { categoryId, subCategoryId, productId } = req.params;
@@ -176,12 +270,13 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Subcategory not found' });
     }
 
-    const product = subCategory.products.id(productId);
-    if (!product) {
+    const productIndex = subCategory.products.findIndex(p => p._id.toString() === productId);
+    if (productIndex === -1) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    product.remove();
+    subCategory.products.splice(productIndex, 1);
+
     await category.save();
 
     res.status(200).json({ message: 'Product deleted successfully' });

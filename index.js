@@ -4,10 +4,11 @@ const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const path = require("path");
 const ConnectDB = require('./src/utils/database');
 const categoryRoutes = require('./src/routes/productsRoute');
 const inquiryRoutes = require('./src/routes/inQueryFormRoute');
-
+const upload = require('./src/utils/multer');
 app.use(express.json());
 
 
@@ -18,6 +19,8 @@ app.use(cookieParser());
 app.use(cors());
 
 ConnectDB();
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use("/api/v1/", categoryRoutes);
 app.use("/api/v1/", inquiryRoutes); 

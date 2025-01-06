@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Product Schema
 const productSchema = new mongoose.Schema({
   productName: {
     type: String,
@@ -9,6 +10,11 @@ const productSchema = new mongoose.Schema({
     {
       key: { type: String, required: true },
       value: { type: String, required: true },
+      unit: { 
+        type: String, 
+        required: false,  
+        default: "-"      
+      },
     },
   ],
   productImage: {
@@ -19,8 +25,13 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  productsYoutubeLink: {
+    type: String,        
+    required: false,     
+  },
 });
 
+// SubCategory Schema
 const subCategorySchema = new mongoose.Schema({
   subCategoryName: {
     type: String,
@@ -31,8 +42,18 @@ const subCategorySchema = new mongoose.Schema({
     required: true,
   },
   products: [productSchema], 
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',  
+    required: true,    
+  },
+  subCategoriesYoutubeLink: {
+    type: String,        // The field will store the YouTube video URL as a string
+    required: false,     // Make it optional, or change to `true` if you need it mandatory
+  },
 });
 
+// Category Schema
 const categorySchema = new mongoose.Schema({
   categoryName: {
     type: String,
@@ -45,4 +66,5 @@ const categorySchema = new mongoose.Schema({
   subCategories: [subCategorySchema], 
 });
 
+// Export Category model
 module.exports = mongoose.model('Category', categorySchema);
