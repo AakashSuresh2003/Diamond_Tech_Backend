@@ -1,3 +1,4 @@
+const { application } = require('express');
 const mongoose = require('mongoose');
 
 // Product Schema
@@ -17,6 +18,10 @@ const productSchema = new mongoose.Schema({
       },
     },
   ],
+  application:{
+    type: String,
+    required: false
+  },
   productImage: {
     type: String,
     required: true,
@@ -29,6 +34,11 @@ const productSchema = new mongoose.Schema({
     type: String,        
     required: false,     
   },
+
+  features: {
+    type: [String], 
+    required: false, 
+  }
 });
 
 // SubCategory Schema
@@ -48,8 +58,8 @@ const subCategorySchema = new mongoose.Schema({
     required: true,    
   },
   subCategoriesYoutubeLink: {
-    type: String,        // The field will store the YouTube video URL as a string
-    required: false,     // Make it optional, or change to `true` if you need it mandatory
+    type: String,        
+    required: false,     
   },
 });
 

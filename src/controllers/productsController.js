@@ -91,7 +91,7 @@ exports.addSubCategory = async (req, res) => {
 exports.addProductToSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
-    const { productName, details, productsYoutubeLink } = req.body;
+    const { productName, details, productsYoutubeLink , application , features } = req.body;
 
     const specifications = [];
     for (let i = 0; ; i++) {
@@ -104,7 +104,7 @@ exports.addProductToSubCategory = async (req, res) => {
       specifications.push({ key, value, unit: unit || "-" });
     }
 
-    const productData = { productName, details, productsYoutubeLink, specifications };
+    const productData = { productName, details, productsYoutubeLink, specifications , application , features: features || [] };
 
     if (req.file) {
       productData.productImage = `/uploads/${req.file.filename}`;
