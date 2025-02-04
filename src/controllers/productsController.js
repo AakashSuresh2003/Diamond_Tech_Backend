@@ -134,8 +134,7 @@ exports.addProductToSubCategory = async (req, res) => {
 
 exports.getProductsInSubCategory = async (req, res) => {
   try {
-    const { categoryId, subCategoryId } = req.params;
-
+    const { categoryId, subCategoryId } = req.params;  
     const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
