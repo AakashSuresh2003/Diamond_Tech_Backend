@@ -19,7 +19,11 @@ router.post('/categories/:categoryId/subcategories/:subCategoryId/products',
 router.get('/categories/:categoryId/subcategories/:subCategoryId/products', categoryController.getProductsInSubCategory);
 router.get('/categories/:categoryId/subcategories/', categoryController.getSubCategoriesInCategory);
 router.get('/categories/:categoryId/subcategories/:subCategoryId/products/:productId', categoryController.getProductById);
-router.put('/categories/:categoryId/subcategories/:subCategoryId/products/:productId', categoryController.updateProduct);
+// Update product route with multiple image upload support
+router.put('/categories/:categoryId/subcategories/:subCategoryId/products/:productId', 
+  upload.array('productImage', 5),  // Changed from single to array upload
+  categoryController.updateProduct
+);
 router.delete('/categories/:categoryId/subcategories/:subCategoryId/products/:productId', categoryController.deleteProduct);
 
 module.exports = router;
