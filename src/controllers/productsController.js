@@ -3,20 +3,21 @@ const upload = require('../utils/multer');
 
 exports.createCategory = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'Category image is required' });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Category images are required' });
     }
 
     const { categoryName } = req.body;
-    const categoryImage = `/uploads/${req.file.filename}`;
 
     if (!categoryName) {
       return res.status(400).json({ message: 'Category name is required' });
     }
 
+    const categoryImages = req.files.map(file => `/uploads/${file.filename}`);
+
     const categoryData = {
       categoryName,
-      categoryImage,
+      categoryImages
     };
 
     const category = new Category(categoryData);
@@ -25,6 +26,9 @@ exports.createCategory = async (req, res) => {
     res.status(201).json({ message: 'Category created successfully', category });
   } catch (err) {
     console.error(err);
+    if (err.message.includes('format allowed')) {
+      return res.status(400).json({ message: 'Only .png, .jpg and .jpeg formats are allowed' });
+    }
     res.status(400).json({ message: 'Error creating category', error: err.message });
   }
 };
@@ -56,19 +60,19 @@ exports.addSubCategory = async (req, res) => {
     const { categoryId } = req.params;
     const { subCategoryName, subCategoriesYoutubeLink } = req.body;
 
-    if (!req.file) {
-      return res.status(400).json({ message: 'Subcategory image is required' });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Subcategory images are required' });
     }
 
     if (!subCategoryName) {
       return res.status(400).json({ message: 'Subcategory name is required' });
     }
 
-    const subCategoryImage = `/uploads/${req.file.filename}`;
+    const subCategoryImages = req.files.map(file => `/uploads/${file.filename}`);
 
     const subCategoryData = {
       subCategoryName,
-      subCategoryImage,
+      subCategoryImages,  // Make sure this matches the schema field name
       subCategoriesYoutubeLink: subCategoriesYoutubeLink || "",
       category: categoryId
     };
@@ -84,6 +88,9 @@ exports.addSubCategory = async (req, res) => {
     res.status(201).json({ message: 'Subcategory added successfully', category });
   } catch (err) {
     console.error(err);
+    if (err.message.includes('format allowed')) {
+      return res.status(400).json({ message: 'Only .png, .jpg and .jpeg formats are allowed' });
+    }
     res.status(400).json({ message: 'Error adding subcategory', error: err.message });
   }
 };
@@ -91,7 +98,11 @@ exports.addSubCategory = async (req, res) => {
 exports.addProductToSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
-    const { productName, details, productsYoutubeLink , application , features } = req.body;
+    const { productName, details, productsYoutubeLink, application, features } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'Product images are required' });
+    }
 
     const specifications = [];
     for (let i = 0; ; i++) {
@@ -104,13 +115,17 @@ exports.addProductToSubCategory = async (req, res) => {
       specifications.push({ key, value, unit: unit || "-" });
     }
 
-    const productData = { productName, details, productsYoutubeLink, specifications , application , features: features || [] };
+    const productImages = req.files.map(file => `/uploads/${file.filename}`);
 
-    if (req.file) {
-      productData.productImage = `/uploads/${req.file.filename}`;
-    }
-
-    console.log('Product Data:', productData);
+    const productData = { 
+      productName, 
+      details, 
+      productsYoutubeLink, 
+      specifications, 
+      application, 
+      features: features || [],
+      productImages
+    };
 
     const category = await Category.findById(categoryId);
     if (!category) {
@@ -128,6 +143,9 @@ exports.addProductToSubCategory = async (req, res) => {
     res.status(201).json({ message: 'Product added successfully', category });
   } catch (err) {
     console.error('Error adding product:', err);
+    if (err.message.includes('format allowed')) {
+      return res.status(400).json({ message: 'Only .png, .jpg and .jpeg formats are allowed' });
+    }
     res.status(400).json({ message: 'Error adding product', error: err.message });
   }
 };

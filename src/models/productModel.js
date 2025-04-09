@@ -22,10 +22,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: false
   },
-  productImage: {
+  productImages: [{
     type: String,
-    required: true,
-  },
+    required: true
+  }],
   details: {
     type: String,
     required: true,
@@ -45,22 +45,18 @@ const productSchema = new mongoose.Schema({
 const subCategorySchema = new mongoose.Schema({
   subCategoryName: {
     type: String,
-    required: true,
+    required: true
   },
-  subCategoryImage: {
+  subCategoryImages: [{ 
     type: String,
-    required: true,
-  },
-  products: [productSchema], 
+    required: true
+  }],
+  subCategoriesYoutubeLink: String,
   category: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',  
-    required: true,    
+    ref: 'Category'
   },
-  subCategoriesYoutubeLink: {
-    type: String,        
-    required: false,     
-  },
+  products: [productSchema]
 });
 
 // Category Schema
@@ -69,12 +65,26 @@ const categorySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  categoryImage: {
+  // In your schema definition, update the categoryImage field to categoryImages array
+  categoryImages: [{
     type: String,
-    required: true,
-  },
+    required: true
+  }],
   subCategories: [subCategorySchema], 
 });
 
 // Export Category model
 module.exports = mongoose.model('Category', categorySchema);
+
+
+const imageValidator = {
+  validator: function(v) {
+    return v.every(url => /\.(jpg|jpeg|png)$/i.test(url));
+  },
+  message: 'Images must be in jpg, jpeg, or png format'
+};
+
+// Apply to all image arrays
+categorySchema.path('categoryImages').validate(imageValidator);
+subCategorySchema.path('subCategoryImages').validate(imageValidator);
+productSchema.path('productImages').validate(imageValidator);
